@@ -1,17 +1,21 @@
 <html>
-<script src='https://d3js.org/d3.v5.min.js'></script>
-<style> rect {fill: lightblue; stroke: black; }</style>
-<body>
-<svg width=300 height=300>
+<script src='https://d3js.org/d3.v7.min.js'></script>
+<style> circle {fill: lightblue; stroke: black;} </style>
+<body onload='init()'>
+<svg width=1000 height=1000>
 </svg>
 <script>
-var data = [4,8,15,16,23,42];
+async function init() {
+//var data = [4,8,15,16,23,42];
+data = await d3.csv("mean_by_state.csv");
 
-var margin = 50;
-var width = 200;
-var height = 200;
-var x = d3.scaleBand().domain([0,1,2,3,4,5]).range([0,width]);
-var y = d3.scaleLinear().domain([0,42]).range([height,0]);
+var margin = 100;
+var width = 800;
+var height = 800;
+var xDomain = data.num_zip_codes
+var yMax = Math.max(data.mean_overall)
+var x = d3.scaleBand().domain(xDomain).range([0,width]);
+var y = d3.scaleLinear().domain([0,yMax]).range([height,0]);
 d3.select("svg")
     .attr("width",width + 2*margin)
     .attr("width",height + 2*margin)
@@ -33,7 +37,7 @@ d3.select("svg").append("g")
 d3.select("svg").append("g")
     .attr("transform","translate("+margin+","+(height+margin)+")")
     .call(d3.axisBottom(x));
-
+}
 </script>
 </body>
 </html>
