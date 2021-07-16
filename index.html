@@ -1,43 +1,157 @@
 <html>
 <script src='https://d3js.org/d3.v7.min.js'></script>
-<style> circle {fill: lightblue; stroke: black;} </style>
+<style>
+circle {fill: lightblue; stroke: black;} 
+/*body {color:  black;}*/
+.link line {stroke:  black;}
+.node circle {stroke: black; fill: white;}
+.node text {text-anchor: middle; }
+</style>
 <body onload='init()'>
-<svg width=1000 height=1000>
+<!-- <body onload='test()'>
+ --><svg width=2000 height=2000>
 </svg>
+<!-- <script>
+    fetch('data/mean_by_state.csv').then(function(response) { console.log(response);
+      return response;
+    }).then(function(json) {
+      console.log(json);
+    }).catch(function(err) {
+      console.log('Fetch problem: ' + err.message);
+    });
+</script> -->
+<!-- <script>
+    async function test() {
+        data = await d3.text('data/mean_by_state.csv').then(function(data) { return data; });
+        console.log(data)
+    }
+</script> -->
 <script>
 async function init() {
 //var data = [4,8,15,16,23,42];
-data = await d3.csv("mean_by_state.csv");
+data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/mean_by_state.csv");
+links = await d3.csv("");
 
-var margin = 100;
-var width = 800;
-var height = 800;
-var xDomain = data.num_zip_codes
-var yMax = Math.max(data.mean_overall)
-var x = d3.scaleBand().domain(xDomain).range([0,width]);
-var y = d3.scaleLinear().domain([0,yMax]).range([height,0]);
-d3.select("svg")
-    .attr("width",width + 2*margin)
-    .attr("width",height + 2*margin)
-    .append("g")
-    .attr("transform","translate("+margin+","+margin+")")
-    .selectAll("rect")
+console.log(data);
+var margin = 250;
+var width = 1500;
+var height = 1500;
+var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
+console.log(num_zip_codes);
+var xDomain = num_zip_codes.sort((a, b) => a - b);
+console.log(xDomain);
+var yMax = d3.max(data, function(d) { return +d.mean_overall; });
+var yMin = d3.min(data, function(d) { return +d.mean_overall; });
+console.log(yMax);
+
+
+var nStates = d3.map(data, function(d, i) { return i; });
+console.log(nStates);
+var links = d3.map
+var x = d3.scaleLinear().domain([-1, d3.max(nStates)]).range([0, width]);
+var y = d3.scaleLog().domain([50000, yMax+100000]).range([height, 0]);
+
+
+var svg = d3.select("svg");
+// var svg = d3.select("svg"),
+//     width = +svg.attr("width"),
+//     height = +svg.attr("height");
+
+var simulation = d3.forceSimulation(data)
+    .force("link", d3.forceLink().distance(75)
+        .id(function(d) { return d.State; }))
+    .force("charge", d3.forceManyBody().strength(-100))
+    .force("center", d3.forceCenter(width / 2, height / 2));
+    // .force("x", d3.forceX())
+    // .force("y", d3.forceY());
+
+var nodesel = svg.selectAll(".node")
     .data(data)
     .enter()
-    .append("rect")
-    .attr("x", function(d, i) {return x(i);})
-    .attr("y", function(d, i) {return y(d);})
-    .attr("width", x.bandwidth)
-    .attr("height", function(d) {return height - y(d);});
+    .append("g")
+    .attr("class", "node");
 
-d3.select("svg").append("g")
-    .attr("transform","translate("+margin+","+margin+")")
-     .call(d3.axisLeft(y));
+nodesel.append("circle")
+    .attr("r", function(d) { return d.mean_overall / 5000; });
 
-d3.select("svg").append("g")
-    .attr("transform","translate("+margin+","+(height+margin)+")")
-    .call(d3.axisBottom(x));
+nodesel.append("text")
+    .attr("transform", "translate(0,6)")
+    .attr("size", function(d) { return 10})
+    .text(function(d) { return d.State; });
+
+simulation.on("end", ticked);
+
+function ticked() {
+    nodesel.attr("transform", function(d, i) {
+        return "translate(" + x(i) + "," + y(d.mean_overall) + ")";
+    });
 }
+
+// function ticked() {
+//   var u = nodesel
+//     .join('circle')
+//     .attr('r', 5)
+//     .attr('cx', function(d) {
+//       return d.x
+//     })
+//     .attr('cy', function(d) {
+//       return d.y
+//     });
+// }
+
+// svg.append("g")
+//      .attr("transform", "translate("+margin+","+margin+")")
+//      .selectAll("dot")
+//     .data(data)
+//     .enter()
+//     .append("circle")
+//         .attr("cx", function(d, i) {console.log(x(i)); return x(i);})
+//         .attr("cy", function(d) {console.log(y(d.mean_overall)); return y(d.mean_overall);})
+//         .attr("r", function(d) {return d.mean_overall / 10000; })
+//     .append("text")
+//         .attr("x", function(d) { return "50%"; })
+//         .attr("y", function(d) { return "50%"; })
+//         .attr("stroke", function(d) { return "#51c5cf"; })
+//         .attr("stroke-width", function(d) { return "2px"; })
+//         .attr("dy", function(d) { return ".3em"; })
+//         .attr("text-anchor", function(d) { return "middle"; })
+//         .attr("font-size", function(d) { return "20px"; })
+//         .text(function(d) {return d.State });
+
+// svg.append("g")
+//     .attr("transform", "translate("+margin+","+margin+")")
+//     .call(d3.axisLeft(y).tickFormat(d3.format("~s")));
+
+// svg.append("g")
+//     .attr("transform", "translate("+margin+","+(height+margin)+")")
+//     .call(d3.axisBottom(x).tickValues(nStates).tickFormat(d3.format("~s")));
+
+
+// d3.select("svg")
+//     .attr("width",width + 2*margin)
+//     .attr("width",height + 2*margin)
+//     .append("g")
+//     .attr("transform","translate("+margin+","+margin+")")
+//     .selectAll("rect")
+//     .data(data)
+//     .enter()
+//     .append("rect")
+//     .attr("x", function(d, i) {return x(i);})
+//     .attr("y", function(d, i) {return y(d);})
+//     .attr("width", x.bandwidth)
+//     .attr("height", function(d) {return height - y(d);});
+
+// d3.select("svg").append("g")
+//     .attr("transform","translate("+margin+","+margin+")")
+//      .call(d3.axisLeft(y));
+
+// d3.select("svg").append("g")
+//     .attr("transform","translate("+margin+","+(height+margin)+")")
+//     .call(d3.axisBottom(x));
+// }
+
+}
+
 </script>
 </body>
 </html>
