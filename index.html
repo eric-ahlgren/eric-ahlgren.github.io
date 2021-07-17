@@ -9,7 +9,8 @@ circle {fill: lightblue; stroke: black;}
 </style>
 <body onload='init()'>
 <!-- <body onload='test()'>
- --><svg width=2000 height=2000>
+ -->
+ <svg width=3000 height=2000>
 </svg>
 <!-- <script>
     fetch('data/mean_by_state.csv').then(function(response) { console.log(response);
@@ -29,13 +30,16 @@ circle {fill: lightblue; stroke: black;}
 <script>
 async function init() {
 //var data = [4,8,15,16,23,42];
-data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
-links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
+// data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
+// links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
+data = await d3.csv("data/mean_by_state.csv");
+links = await d3.csv("data/state_links.csv");
+
 
 console.log(data);
-var margin = 100;
-var width = 1000;
-var height = 1000;
+var margin = 200;
+var width = 3000;
+var height = 2000;
 var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
 console.log(num_zip_codes);
 var xDomain = num_zip_codes.sort((a, b) => a - b);
@@ -58,9 +62,9 @@ var svg = d3.select("svg");
 //     height = +svg.attr("height");
 
 var simulation = d3.forceSimulation(data)
-    .force("link", d3.forceLink(links).distance(200)
+    .force("link", d3.forceLink(links).distance(20)
         .id(function(d) { return d.State; }))
-    .force("charge", d3.forceManyBody().strength(-500))
+    .force("charge", d3.forceManyBody().strength(-1000))
     .force("center", d3.forceCenter(width / 2, height / 2));
     // .force("x", d3.forceX())
     // .force("y", d3.forceY());
