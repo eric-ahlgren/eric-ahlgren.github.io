@@ -4,13 +4,14 @@
 circle {fill: lightblue; stroke: black;} 
 /*body {color:  black;}*/
 .link line {stroke:  black;}
-.node circle {stroke: black; fill: white;}
-.node text {text-anchor: middle; }
+.node circle {stroke: lightsteelblue; fill: lightskyblue;}
+.node text {text-anchor: middle; fill: navy; font: 16px sans-serif;}
 </style>
 <body onload='init()'>
 <!-- <body onload='test()'>
  -->
- <svg width=3000 height=2000>
+ <div id="svg_template">
+ <svg width=1000 height=1000>
 </svg>
 <!-- <script>
     fetch('data/mean_by_state.csv').then(function(response) { console.log(response);
@@ -30,16 +31,16 @@ circle {fill: lightblue; stroke: black;}
 <script>
 async function init() {
 //var data = [4,8,15,16,23,42];
-// data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
-// links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
-data = await d3.csv("data/mean_by_state.csv");
-links = await d3.csv("data/state_links.csv");
+data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
+links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
+// data = await d3.csv("data/mean_by_state.csv");
+// links = await d3.csv("data/state_links.csv");
 
 
 console.log(data);
-var margin = 200;
-var width = 3000;
-var height = 2000;
+var margin = 100;
+var width = 1000;
+var height = 1000;
 var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
 console.log(num_zip_codes);
 var xDomain = num_zip_codes.sort((a, b) => a - b);
@@ -54,7 +55,7 @@ console.log(nStates);
 console.log(links);
 var x = d3.scaleLinear().domain([-1, d3.max(nStates)]).range([0, width]);
 var y = d3.scaleLog().domain([50000, yMax+100000]).range([height, 0]);
-
+var reduceFactor = 5000
 
 var svg = d3.select("svg");
 // var svg = d3.select("svg"),
@@ -62,45 +63,93 @@ var svg = d3.select("svg");
 //     height = +svg.attr("height");
 
 var simulation = d3.forceSimulation(data)
-    .force("link", d3.forceLink(links).distance(20)
+    .force("link", d3.forceLink(links).distance(10)
         .id(function(d) { return d.State; }))
-    .force("charge", d3.forceManyBody().strength(-1000))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+    .force("charge", d3.forceManyBody().strength(-10))
+    .force("center", d3.forceCenter(width / 2, height / 2))
     // .force("x", d3.forceX())
     // .force("y", d3.forceY());
+    .force("collision", d3.forceCollide().radius(function(d) {return d.mean_overall / reduceFactor; }));
 
+var mouseover = function(event, d) {
+    console.log("mouseover")
+    tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+      .style("opacity", 1)
+    }
+var mousemove = function(event, d) {
+    //console.log(d3.pointer(d, d3.select(this)));
+    //console.log(event.pageX, event.pageY)
+    tooltip
+      .html("The exact value of<br>this cell is: " + d.mean_overall)
+      // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
+      // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
+      .style("left", event.pageX + "px")
+      .style("top", event.pageY + 20 + "px");
+    }
+var mouseleave = function(event, d) {
+    tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+      .style("opacity", 0.8)
+    }
 
 var linksel = svg.append("g")
     .attr("class", "link")
-    .selectAll("line").data(links).enter().append("line")
+    .selectAll("line").data(links).enter();
+    // .append("line")
 
 var nodesel = svg.selectAll(".node")
     .data(data)
     .enter()
     .append("g")
-    .attr("class", "node");
+    .attr("class", "node")
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseleave", mouseleave);
 
 nodesel.append("circle")
-    .attr("r", function(d) { return d.mean_overall / 5000; });
+    .attr("r", function(d) { return d.mean_overall / reduceFactor; });
 
 nodesel.append("text")
     .attr("transform", "translate(0,6)")
-    .attr("size", function(d) { return 10})
+    // .attr("size", function(d) { return 10; })
+    // .attr("color", function(d) { return "#191970"; })
     .text(function(d) { return d.State; });
 
-simulation.on("end", ticked);
+// var tooltip = d3.selectAll(".node")
+//     .append("div")
+var tooltip = d3.select("div")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("position", "absolute")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px");
+
+
+
+simulation.on("tick", ticked);
 
 function ticked() {
-    linksel.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+    // linksel.attr("x1", function(d) { return d.source.x; })
+    //     .attr("y1", function(d) { return d.source.y; })
+    //     .attr("x2", function(d) { return d.target.x; })
+    //     .attr("y2", function(d) { return d.target.y; });
 
     nodesel.attr("transform", function(d, i) {
         //return "translate(" + x(i) + "," + y(d.mean_overall) + ")";
         return "translate(" + d.x + "," + d.y + ")";
     });
 }
+
+
 
 // function ticked() {
 //   var u = nodesel
@@ -168,5 +217,6 @@ function ticked() {
 }
 
 </script>
+</div>
 </body>
 </html>
