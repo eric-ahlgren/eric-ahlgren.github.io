@@ -33,11 +33,12 @@ async function init() {
 //var data = [4,8,15,16,23,42];
 data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
 links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
+zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv")
 // data = await d3.csv("data/mean_by_state.csv");
 // links = await d3.csv("data/state_links.csv");
 
 
-console.log(data);
+console.log(zip_data);
 var margin = 100;
 var width = 1000;
 var height = 1000;
@@ -72,7 +73,6 @@ var simulation = d3.forceSimulation(data)
     .force("collision", d3.forceCollide().radius(function(d) {return d.mean_overall / reduceFactor; }));
 
 var mouseover = function(event, d) {
-    console.log("mouseover")
     tooltip
       .style("opacity", 1)
     d3.select(this)
