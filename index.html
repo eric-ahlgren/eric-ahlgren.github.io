@@ -34,12 +34,12 @@ async function init() {
 //var data = [4,8,15,16,23,42];
 data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
 links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
-zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv")
+zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv");
+time_data = await d3.csv("https://media.githubusercontent.com/media/eric-ahlgren/eric-ahlgren.github.io/master/data/median_housing_1996_2021.csv");
 // data = await d3.csv("data/mean_by_state.csv");
 // links = await d3.csv("data/state_links.csv");
 
 
-console.log(zip_data);
 var margin = 100;
 var width = 1000;
 var height = 1200;
@@ -81,7 +81,7 @@ var mousemove = function(event, d) {
     //console.log(d3.pointer(d, d3.select(this)));
     //console.log(event.pageX, event.pageY)
     tooltip
-      .html("25-year mean value: " + d3.format("($,.2f")(d.mean_overall))
+      .html("25-year mean value: " + d3.format("($,.0f")(d.mean_overall))
       // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
       // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
       .style("left", event.pageX + "px")
@@ -106,7 +106,7 @@ var zipmousemove = function(event, d) {
     //console.log(d3.pointer(d, d3.select(this)));
     //console.log(event.pageX, event.pageY)
     tooltip
-      .html("Zip Code: "+d.zip_code+"<br>25-year mean value: " + d3.format("($,.2f")(d.mean_housing_price))
+      .html("Zip Code: "+d.zip_code+"<br>25-year mean value: " + d3.format("($,.0f")(d.mean_housing_price))
       // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
       // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
       .style("left", event.pageX + "px")
@@ -120,15 +120,111 @@ var zipmouseleave = function(event, d) {
       .style("opacity", 0.8)
     }
 
+var timemouseover = function(event, d) {
+    tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+      .style("opacity", 1)
+    }
+var timemousemove = function(event, d) {
+    //console.log(d3.pointer(d, d3.select(this)));
+    //console.log(event.pageX, event.pageY)
+    tooltip
+      .html("Date: "+d.date+"<br>Median Value: " + d3.format("($,.0f")(d.value))
+      // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
+      // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
+      .style("left", event.pageX + "px")
+      .style("top", event.pageY + 20 + "px");
+    }
+var timemouseleave = function(event, d) {
+    tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+      .style("opacity", 0.8)
+    }
+
+
+function plotTime(event, d) {
+    var margin = 50;
+    var width = 800;
+    var height = 600;
+    var zipCode = d.zip_code;
+    var timeData = time_data.filter(function(dd) {return d.zip_code == dd.RegionName})[0];
+    var dropCols = ['City', 'CountyName', 'Metro', 'RegionID', 'RegionName', 'RegionType', 'SizeRank', 'State', 'StateName'];
+    var values = [];
+    var entries = Object.entries(timeData);
+    console.log(entries);
+    entries.forEach(function(item, index, array) {
+        if (! dropCols.includes(item[0]) && item[1].length > 0) {
+            obj = {};
+            obj.date = d3.timeParse("%Y-%m-%d")(item[0]);
+            obj.value = item[1];
+            values.push(obj);
+        }
+    });
+
+    console.log(values);
+    d3.selectAll("svg > *").remove()
+    window.scrollTo(0,0);
+    var x = d3.scaleTime()
+      .domain(d3.extent(values, function(d) { return d.date; }))
+      .range([0, width]);
+    var y = d3.scaleLinear()
+      .domain([0, d3.max(values, function(d) { return +d.value; })])
+      .range([height, 0]);
+
+    svg.append("path")
+      .datum(values)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.line()
+        .x(function(d) { return x(d.date) + margin; })
+        .y(function(d) { return y(d.value) + margin; })
+        )
+    svg.append("g")
+      // .attr("transform", "translate(0," + height + ")")
+      // .call(d3.axisBottom(x));
+        .attr("transform", "translate("+margin+","+(height+margin)+")")
+        // .call(d3.axisBottom(x).tickValues(nZips).tickFormat(d3.format("~s")));
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+      // .call(d3.axisLeft(y));
+        .attr("transform", "translate("+margin+","+margin+")")
+        .call(d3.axisLeft(y).tickFormat(d3.format("~s")));
+    svg.append("rect")
+        .datum(d)
+        .attr("x", margin)
+        .attr("y", (height+margin+25))
+        .attr("width", "80")
+        .attr("height", "30")
+        .attr("rx", "10")
+        .on("click", plotZips);
+    svg.append("text")
+          // .attr("transform", "translate(0,6)")
+          // .attr("text-anchor", "middle")
+          .datum(d)
+          .attr("x", margin+20)
+          .attr("y", height+margin+45)
+          .text("Back")
+          .on("click", plotZips);
+}
 
 function plotZips(event, d) {
+    console.log(event, d);
+    window.scrollTo(0,0);
+    var margin = 100;
+    var width = 1000;
+    var height = 1200;
     tooltip
       .style("opacity", 0)
     // var filterStates = function(d) {
     // if (d.State === "AK") { return d; }
     // }
     stateData = zip_data.filter(function(dd) { return d.State === dd.State });
-    console.log(stateData);
     var nZips = d3.map(stateData, function(d, i) { return i; });
 
 // console.log(nStates);
@@ -149,7 +245,7 @@ function plotZips(event, d) {
         .attr("cx", function(d, i) {return x(i);})
         .attr("cy", function(d) {return y(d.mean_housing_price);})
         .attr("r", function(d) {return d.mean_housing_price / 25000; })
-        //.on("click", plotZips)
+        .on("click", plotTime)
         .on("mouseover", zipmouseover)
         .on("mousemove", zipmousemove)
         .on("mouseleave", zipmouseleave);
@@ -190,6 +286,10 @@ var tooltip = d3.select("div")
     .style("padding", "5px");
 
 var plotStates = function(event, d) {
+    window.scrollTo(0,0);
+    var margin = 100;
+    var width = 1000;
+    var height = 1200;
     d3.selectAll("svg > *").remove();
 
 
