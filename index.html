@@ -72,16 +72,17 @@ var svg = d3.select("svg");
 
 var mouseover = function(event, d) {
     tooltip
-      .style("opacity", 1)
+      .style("opacity", 1);
     d3.select(this)
       .style("stroke", "black")
       .style("opacity", 1)
+      .style("cursor", "pointer");
     }
 var mousemove = function(event, d) {
     //console.log(d3.pointer(d, d3.select(this)));
     //console.log(event.pageX, event.pageY)
     tooltip
-      .html("25-year mean value: " + d3.format("($,.0f")(d.mean_overall))
+      .html("25-year mean value: " + d3.format("($,.0f")(d.mean_overall) + "<br>Num Zip Codes: " + d.num_zip_codes)
       // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
       // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
       .style("left", event.pageX + "px")
@@ -93,14 +94,16 @@ var mouseleave = function(event, d) {
     d3.select(this)
       .style("stroke", "none")
       .style("opacity", 0.8)
+      .style("cursor", "default");
     }
 
 var zipmouseover = function(event, d) {
     tooltip
-      .style("opacity", 1)
+      .style("opacity", 1);
     d3.select(this)
       .style("stroke", "black")
       .style("opacity", 1)
+      .style("cursor", "pointer");
     }
 var zipmousemove = function(event, d) {
     //console.log(d3.pointer(d, d3.select(this)));
@@ -114,24 +117,25 @@ var zipmousemove = function(event, d) {
     }
 var zipmouseleave = function(event, d) {
     tooltip
-      .style("opacity", 0)
+      .style("opacity", 0);
     d3.select(this)
       .style("stroke", "none")
       .style("opacity", 0.8)
+      .style("cursor", "default");
     }
 
 var timemouseover = function(event, d) {
     tooltip
-      .style("opacity", 1)
+      .style("opacity", 1);
     d3.select(this)
-      .style("stroke", "black")
-      .style("opacity", 1)
+      .style("stroke", "lightgrey")
+      .style("opacity", 0.7);
     }
 var timemousemove = function(event, d) {
     //console.log(d3.pointer(d, d3.select(this)));
     //console.log(event.pageX, event.pageY)
     tooltip
-      .html("Date: "+d.date+"<br>Median Value: " + d3.format("($,.0f")(d.value))
+      .html("Date: "+d3.timeFormat("%Y-%m-%d")(d.date)+"<br>Median Value: " + d3.format("($,.0f")(d.value))
       // .style("left", (d3.pointer(d, d3.select(this))[0]) + "px")
       // .style("top", (d3.pointer(d, d3.select(this))[1]) + "px")
       .style("left", event.pageX + "px")
@@ -142,11 +146,47 @@ var timemouseleave = function(event, d) {
       .style("opacity", 0)
     d3.select(this)
       .style("stroke", "none")
-      .style("opacity", 0.8)
+      .style("opacity", 0);
     }
-
-
+var backmouseover = function(event, d) {
+    d3.select(this)
+      .style("fill", "slate")
+      .style("stroke", "lightgray")
+      .style("opacity", 0.7)
+      .style("cursor", "pointer");
+    }
+var backmouseleave = function(event, d) {
+    d3.select(this)
+      .style("fill", "lightgray")
+      .style("stroke", "black")
+      .style("opacity", 1)
+      .style("cursor", "default");
+    }
+var textmouseover = function(event, d) {
+    d3.select(this)
+      // .style("stroke", "darkgrey")
+      // .style("opacity", 0.7)
+      .style("cursor", "pointer");
+    d3.selectAll("rect")
+      .style("fill", "slate")
+      .style("stroke", "lightgray")
+      .style("opacity", 0.7)
+      .style("cursor", "pointer");
+    }
+var textmouseleave = function(event, d) {
+    d3.select(this)
+      // .style("stroke", "black")
+      // .style("opacity", 1)
+      .style("cursor", "default");
+    d3.selectAll("rect")
+      .style("fill", "lightgray")
+      .style("stroke", "black")
+      .style("opacity", 1)
+      .style("cursor", "default");
+    }
 function plotTime(event, d) {
+    tooltip
+      .style("opacity", 0)
     var margin = 50;
     var width = 800;
     var height = 600;
@@ -185,6 +225,19 @@ function plotTime(event, d) {
         .y(function(d) { return y(d.value) + margin; })
         )
     svg.append("g")
+     .attr("transform", "translate("+margin+","+margin+")")
+     .selectAll(".dot")
+    .data(values)
+    .enter()
+    .append("circle")
+        .attr("cx", function(d, i) {return x(d.date);})
+        .attr("cy", function(d) {return y(d.value);})
+        .attr("r", function(d) {return 6; })
+        .style("opacity", "0")
+        .on("mouseover", timemouseover)
+        .on("mousemove", timemousemove)
+        .on("mouseleave", timemouseleave);
+    svg.append("g")
       // .attr("transform", "translate(0," + height + ")")
       // .call(d3.axisBottom(x));
         .attr("transform", "translate("+margin+","+(height+margin)+")")
@@ -202,6 +255,8 @@ function plotTime(event, d) {
         .attr("width", "80")
         .attr("height", "30")
         .attr("rx", "10")
+        .on("mouseover", backmouseover)
+        .on("mouseleave", backmouseleave)
         .on("click", plotZips);
     svg.append("text")
           // .attr("transform", "translate(0,6)")
@@ -210,6 +265,8 @@ function plotTime(event, d) {
           .attr("x", margin+20)
           .attr("y", height+margin+45)
           .text("Back")
+          .on("mouseover", textmouseover)
+          .on("mouseleave", textmouseleave)
           .on("click", plotZips);
 }
 
@@ -264,6 +321,8 @@ function plotZips(event, d) {
         .attr("width", "80")
         .attr("height", "30")
         .attr("rx", "10")
+        .on("mouseover", backmouseover)
+        .on("mouseleave", backmouseleave)
         .on("click", plotStates);
     svg.append("text")
           // .attr("transform", "translate(0,6)")
@@ -271,6 +330,8 @@ function plotZips(event, d) {
           .attr("x", margin+20)
           .attr("y", height+margin+30)
           .text("Back")
+          .on("mouseover", textmouseover)
+          .on("mouseleave", textmouseleave)
           .on("click", plotStates);
     }
 
