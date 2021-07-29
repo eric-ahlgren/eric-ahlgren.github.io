@@ -1,19 +1,39 @@
-<html>
-<script src='https://d3js.org/d3.v7.min.js'></script>
-<style>
-circle {fill: lightblue; stroke: black; opacity: 0.7;}
-rect {fill: lightgray;, stroke: black;} 
-/*body {color:  black;}*/
-.link line {stroke:  black;}
-.node circle {stroke: lightsteelblue; fill: lightskyblue;}
-.node text {text-anchor: middle; fill: navy; font: 16px sans-serif;}
-</style>
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        circle {fill: lightblue; stroke: black; opacity: 0.7;}
+        rect {fill: lightgray;, stroke: black;} 
+        /*body {color:  black;}*/
+        .link line {stroke:  black;}
+        .node circle {stroke: lightsteelblue; fill: lightskyblue;}
+        .node text {text-anchor: middle; fill: navy; font: 16px sans-serif;}
+        html, body {height: 100%;}
+        .container {height: 95%; overflow: scroll;}
+    </style>
+    <title>CS416 Final Project: DataViz</title>
+  </head>
+
 <body onload='init()'>
-<!-- <body onload='test()'>
- -->
- <div id="svg_template">
- <svg width=300000 height=3000>
-</svg>
+ <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand">Median Housing Prices</a>
+</nav>
+ <script src='https://d3js.org/d3.v7.min.js'></script>
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+
+<div class="container overflow-scroll" id="svg_template">
+<!--     <div class="row h-100">
+        <div class="col-xs-12 col-lg-6" id="svg_template"> -->
+<!--   <svg width=300000 height=3000> -->
+ <!-- <svg viewbox="0 0 3840 7000" width="100%" height="100%" preserveAspectRatio="xMinYMin meet"> -->
+<!-- <svg viewbox="-100 -100 1500 500" width="100%" height="100%" preserveAspectRatio="xMinYMin meet">
+</svg> -->
 <!-- <script>
     fetch('data/mean_by_state.csv').then(function(response) { console.log(response);
       return response;
@@ -32,6 +52,7 @@ rect {fill: lightgray;, stroke: black;}
 <script>
 async function init() {
 //var data = [4,8,15,16,23,42];
+
 data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
 links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
 zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv");
@@ -43,6 +64,10 @@ time_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ah
 var margin = 100;
 var width = 1000;
 var height = 1200;
+var screenWidth = window.innerWidth;
+var screenHeight = window.innerHeight;
+var marginTop = screenHeight * 0.1;
+var marginSide = screenWidth * 0.1
 // var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
 // var xDomain = num_zip_codes.sort((a, b) => a - b);
 // var yMax = d3.max(data, function(d) { return +d.mean_overall; });
@@ -56,10 +81,22 @@ var height = 1200;
 // var y = d3.scaleLog().domain([yMin-10000, yMax+200000]).range([height, 0]);
 // var reduceFactor = 5000
 
-var svg = d3.select("svg");
+// var svg = d3.select("svg");
+var svgContainer = d3.select("#svg_template");
+var svg = svgContainer.append("svg")
+        .attr("viewbox", "-100 -100 " + screenWidth + " " + screenHeight)
+        .attr("width", "110%")
+        .attr("height", "110%")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("class", "overflow-scroll")
+        .style("overflow", "scroll");
+
+
 // var svg = d3.select("svg"),
 //     width = +svg.attr("width"),
 //     height = +svg.attr("height");
+var width = parseInt(svg.style("width"), 10);
+var height = parseInt(svg.style("height"), 10);
 
 // var simulation = d3.forceSimulation(data)
 //     .force("link", d3.forceLink(links).distance(10)
@@ -187,9 +224,9 @@ var textmouseleave = function(event, d) {
 function plotTime(event, d) {
     tooltip
       .style("opacity", 0)
-    var margin = 50;
-    var width = 800;
-    var height = 600;
+    // var margin = 50;
+    // var width = 800;
+    // var height = 600;
     var zipCode = d.zip_code;
     var timeData = time_data.filter(function(dd) {return d.zip_code == dd.RegionName})[0];
     var dropCols = ['City', 'CountyName', 'Metro', 'RegionID', 'RegionName', 'RegionType', 'SizeRank', 'State', 'StateName'];
@@ -206,7 +243,30 @@ function plotTime(event, d) {
     });
 
     console.log(values);
-    d3.selectAll("svg > *").remove()
+
+    // //var svg = d3.select("svg");
+    // var width = Math.round(parseInt(svg.style("width"), 10) / 1.3);
+    // var height = Math.round(parseInt(svg.style("height"), 10) / 1.3);
+    // var width = window.innerWidth
+    //d3.selectAll("svg > *").remove()
+
+    d3.selectAll("svg").remove();
+    var svg = svgContainer.append("svg")
+        .attr("viewbox", "0 0 " + screenWidth + " " + screenHeight)
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("class", "overflow-scroll")
+        .style("overflow", "scroll");
+    // var svg = svgContainer.append("svg")
+    //     .attr("viewbox", "0 0 " + width + " " + height)
+    //     .attr("width", "100%")
+    //     .attr("height", "100%")
+    //     .attr("preserveAspectRatio", "xMinYMin meet")
+    //     .attr("class", "overflow-scroll")
+    //     .style("overflow", "scroll");
+    var width = Math.round(parseInt(svg.style("width"), 10) / 1.3);
+    var height = Math.round(parseInt(svg.style("height"), 10) / 1.3);
     window.scrollTo(0,0);
     var x = d3.scaleTime()
       .domain(d3.extent(values, function(d) { return d.date; }))
@@ -221,11 +281,11 @@ function plotTime(event, d) {
       .attr("stroke", "steelblue")
       .attr("stroke-width", 1.5)
       .attr("d", d3.line()
-        .x(function(d) { return x(d.date) + margin; })
-        .y(function(d) { return y(d.value) + margin; })
+        .x(function(d) { return x(d.date) + marginSide; })
+        .y(function(d) { return y(d.value) + marginTop; })
         )
     svg.append("g")
-     .attr("transform", "translate("+margin+","+margin+")")
+     .attr("transform", "translate("+marginSide+","+marginTop+")")
      .selectAll(".dot")
     .data(values)
     .enter()
@@ -240,18 +300,18 @@ function plotTime(event, d) {
     svg.append("g")
       // .attr("transform", "translate(0," + height + ")")
       // .call(d3.axisBottom(x));
-        .attr("transform", "translate("+margin+","+(height+margin)+")")
+        .attr("transform", "translate("+marginSide+","+(height+marginTop)+")")
         // .call(d3.axisBottom(x).tickValues(nZips).tickFormat(d3.format("~s")));
         .call(d3.axisBottom(x));
 
     svg.append("g")
       // .call(d3.axisLeft(y));
-        .attr("transform", "translate("+margin+","+margin+")")
+        .attr("transform", "translate("+marginSide+","+marginTop+")")
         .call(d3.axisLeft(y).tickFormat(d3.format("~s")));
     svg.append("rect")
         .datum(d)
-        .attr("x", margin)
-        .attr("y", (height+margin+25))
+        .attr("x", marginSide)
+        .attr("y", (height+marginTop+25))
         .attr("width", "80")
         .attr("height", "30")
         .attr("rx", "10")
@@ -262,8 +322,8 @@ function plotTime(event, d) {
           // .attr("transform", "translate(0,6)")
           // .attr("text-anchor", "middle")
           .datum(d)
-          .attr("x", margin+20)
-          .attr("y", height+margin+45)
+          .attr("x", marginSide+20)
+          .attr("y", height+marginTop+45)
           .text("Back")
           .on("mouseover", textmouseover)
           .on("mouseleave", textmouseleave)
@@ -271,30 +331,48 @@ function plotTime(event, d) {
 }
 
 function plotZips(event, d) {
-    console.log(event, d);
     window.scrollTo(0,0);
-    var margin = 100;
-    var width = 1000;
-    var height = 1200;
+    // var width = 1000;
+    // var height = 1200;
+    var svg = d3.select("svg");
+    //var width = Math.round(parseInt(svg.style("width"), 10) / 1.3);
+
+    var height = Math.round(parseInt(svg.style("height"), 10) / 1.3);
+    console.log(width)
+    console.log(height)
     tooltip
       .style("opacity", 0)
     // var filterStates = function(d) {
     // if (d.State === "AK") { return d; }
     // }
-    stateData = zip_data.filter(function(dd) { return d.State === dd.State });
+    var stateData = zip_data.filter(function(dd) { return d.State === dd.State });
+    stateData = stateData.sort(function(a,b) {return d3.ascending(a.zip_code, b.zip_code);});
+    //console.log(stateDataSort);
     var nZips = d3.map(stateData, function(d, i) { return i; });
+    var width = d3.max(nZips)*10;
 
 // console.log(nStates);
 // console.log(links);
     var yMax = d3.max(stateData, function(d) { return +d.mean_housing_price; });
     var yMin = d3.min(stateData, function(d) { return +d.mean_housing_price; });
     //var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, width]);
-    var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, d3.max(nZips)*20]);
+    // var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, d3.max(nZips)*20]);
+    // var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, width]);
+    var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, d3.max(nZips)*10]);
     var y = d3.scaleLog().domain([yMin-10000, yMax+600000]).range([height, 0]);
     //d3.selectAll("g > *").remove()
-    d3.selectAll("svg > *").remove()
-    svg.append("g")
-     .attr("transform", "translate("+margin+","+margin+")")
+    //d3.selectAll("svg > *").remove();
+    d3.selectAll("svg").remove();
+    var svg = svgContainer.append("svg")
+        .attr("viewbox", "0 0 " + width + 200 + " " + height + 200)
+        .attr("width", width + 200)
+        .attr("height", height + 200)
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .style("overflow", "scroll");
+
+    var g = svg.append("g");
+
+    g.attr("transform", "translate("+marginSide+","+marginTop+")")
      .selectAll(".dot")
     .data(stateData)
     .enter()
@@ -308,16 +386,16 @@ function plotZips(event, d) {
         .on("mouseleave", zipmouseleave);
 
     svg.append("g")
-        .attr("transform", "translate("+margin+","+margin+")")
+        .attr("transform", "translate("+marginSide+","+marginTop+")")
         .call(d3.axisLeft(y).tickFormat(d3.format("~s")));
 
     svg.append("g")
-        .attr("transform", "translate("+margin+","+(height+margin)+")")
+        .attr("transform", "translate("+marginSide+","+(height+marginTop)+")")
         // .call(d3.axisBottom(x).tickValues(nZips).tickFormat(d3.format("~s")));
         .call(d3.axisBottom(x).tickValues("").tickFormat(d3.format("~s")));
     svg.append("rect")
-        .attr("x", margin)
-        .attr("y", (height+margin+10))
+        .attr("x", marginSide)
+        .attr("y", (height+marginTop+10))
         .attr("width", "80")
         .attr("height", "30")
         .attr("rx", "10")
@@ -327,15 +405,22 @@ function plotZips(event, d) {
     svg.append("text")
           // .attr("transform", "translate(0,6)")
           // .attr("text-anchor", "middle")
-          .attr("x", margin+20)
-          .attr("y", height+margin+30)
+          .attr("x", marginSide+20)
+          .attr("y", height+marginTop+30)
           .text("Back")
           .on("mouseover", textmouseover)
           .on("mouseleave", textmouseleave)
           .on("click", plotStates);
+    // var zoomDots = d3.zoom()
+    //     .scaleExtent([1,8])
+    //     .on("zoom", function(event) {
+    //         // console.log(event);
+    //         g.selectAll("circle").attr("transform", event.transform);
+    //     });
+    // svg.call(zoomDots);
     }
 
-var tooltip = d3.select("div")
+var tooltip = d3.select("#svg_template")
     .append("div")
     .style("opacity", 0)
     .attr("class", "tooltip")
@@ -348,10 +433,22 @@ var tooltip = d3.select("div")
 
 var plotStates = function(event, d) {
     window.scrollTo(0,0);
-    var margin = 100;
-    var width = 1000;
-    var height = 1200;
-    d3.selectAll("svg > *").remove();
+    //var svg = d3.select("svg");
+    d3.selectAll("svg").remove();
+    var svg = svgContainer.append("svg")
+        .attr("viewbox", "-100 -100 " + screenWidth + " " + screenHeight)
+        .attr("width", "110%")
+        .attr("height", "110%")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("class", "overflow-scroll")
+        .style("overflow", "scroll");
+    // var width = 1000;
+    // var height = 1200;
+    var width = parseInt(svg.style("width"), 10);
+    var height = parseInt(svg.style("height"), 10);
+    console.log(width)
+    console.log(height)
+    //d3.selectAll("svg > *").remove();
 
 
     var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
@@ -363,30 +460,33 @@ var plotStates = function(event, d) {
     var nStates = d3.map(data, function(d, i) { return i; });
     // console.log(nStates);
     // console.log(links);
-    var x = d3.scaleLinear().domain([-1, d3.max(nStates)]).range([0, width]);
-    var y = d3.scaleLog().domain([yMin-10000, yMax+200000]).range([height, 0]);
+    // var x = d3.scaleLinear().domain([-1, d3.max(nStates)]).range([20, width-20]);
+    // var y = d3.scaleLog().domain([yMin-10000, yMax+200000]).range([height-20, 20]);
+    var x = d3.scaleLinear().domain([0, d3.max(nStates)]).range([0, width]);
+    var y = d3.scaleLog().domain([yMin, yMax]).range([height, 0]);
     var reduceFactor = 5000
 
-    var svg = d3.select("svg");
+    
     // var svg = d3.select("svg"),
     //     width = +svg.attr("width"),
     //     height = +svg.attr("height");
 
     var simulation = d3.forceSimulation(data)
-        .force("link", d3.forceLink(links).distance(10)
-            .id(function(d) { return d.State; }))
-        .force("charge", d3.forceManyBody().strength(-10))
+        // .force("link", d3.forceLink(links).distance(10)
+        //     .id(function(d) { return d.State; }))
+        .force("charge", d3.forceManyBody().strength(10))
         .force("center", d3.forceCenter(width / 2, height / 2))
         // .force("x", d3.forceX())
         // .force("y", d3.forceY());
         .force("collision", d3.forceCollide().radius(function(d) {return d.mean_overall / reduceFactor; }));
 
-    var linksel = svg.append("g")
-        .attr("class", "link")
-        .selectAll("line").data(links).enter();
+    // var linksel = svg.append("g")
+    //     .attr("class", "link")
+    //     .selectAll("line").data(links).enter();
         // .append("line")
+    var g = svg.append("g");
 
-    var nodesel = svg.selectAll(".node")
+    var nodesel = g.selectAll(".node")
         .data(data)
         .enter()
         .append("g")
@@ -395,7 +495,7 @@ var plotStates = function(event, d) {
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave);
-    ;
+    
 
     nodesel.append("circle")
         .attr("r", function(d) { return d.mean_overall / reduceFactor; });
@@ -424,6 +524,13 @@ var plotStates = function(event, d) {
             return "translate(" + d.x + "," + d.y + ")";
         });
     }
+    var zoomNodes = d3.zoom()
+    .scaleExtent([1,8])
+    .on("zoom", function(event) {
+        g.selectAll(".node").attr("transform", event.transform);
+    });
+
+    //svg.call(zoomNodes);
 }
 plotStates();
 
@@ -493,6 +600,8 @@ plotStates();
 }
 
 </script>
+<!-- </div>
 </div>
+ --></div>
 </body>
 </html>
