@@ -115,14 +115,14 @@
 <script>
 async function init() {
 
-    data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
-    links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
-    zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv");
-    time_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/median_housing_1996_2021.csv");
-    // data = await d3.csv("data/mean_by_state.csv");
-    // links = await d3.csv("data/state_links.csv");
-    // zip_data = await d3.csv("data/mean_by_zip.csv");
-    // time_data = await d3.csv("data/median_housing_1996_2021.csv");
+    // data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_state.csv");
+    // links = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/state_links.csv");
+    // zip_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/mean_by_zip.csv");
+    // time_data = await d3.csv("https://raw.githubusercontent.com/eric-ahlgren/eric-ahlgren.github.io/master/data/median_housing_1996_2021.csv");
+    data = await d3.csv("data/mean_by_state.csv");
+    links = await d3.csv("data/state_links.csv");
+    zip_data = await d3.csv("data/mean_by_zip.csv");
+    time_data = await d3.csv("data/median_housing_1996_2021.csv");
     d3.select("#loading").style("visibility", "hidden");
 
     var screenWidth = window.innerWidth;
@@ -331,7 +331,6 @@ async function init() {
                     .attr("cy", function(d) {return y(d.value);})
                     .attr("r", function(d) {return 6; })
                     .attr("class", "plot")
-                    // .attr("id", function(d, i) {return i == yMinIdx ? "min-value" : null;})
                     .attr("id", function(d, i) {
                         if (i == yMinIdx) {
                             return "min-value";
@@ -452,8 +451,6 @@ async function init() {
         var yMaxIdx = d3.maxIndex(stateData, d => +d.mean_housing_price);
         var yMax = +stateData[yMaxIdx].mean_housing_price;
         var yMin = +stateData[yMinIdx].mean_housing_price;
-        // var yMax = d3.max(stateData, function(d) { return +d.mean_housing_price; });
-        // var yMin = d3.min(stateData, function(d) { return +d.mean_housing_price; });
 
         var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, d3.max(nZips)*15]);
         var y = d3.scaleLog().domain([yMin-10000, yMax+600000]).range([height, 0]);
