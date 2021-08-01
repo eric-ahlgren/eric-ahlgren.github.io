@@ -95,6 +95,8 @@
         #instructions {text-align: center;}
         #title {text-align: center;}
         #chart {background-color:  whitesmoke; border: solid; border-color: lightgray;}
+        #min-value {opacity: 0.80; fill:  salmon;}
+        #max-value {opacity: 0.80; fill: lightseagreen;}
     </style>
     <title>CS416 Final Project: DataViz</title>
   </head>
@@ -230,6 +232,15 @@ async function init() {
             .transition()
                 .duration(1000)
                 .style("opacity", 0.1);
+        d3.selectAll(".annotation").selectChildren()
+            .transition()
+                .duration(1000)
+                .style("opacity", 0.1);
+        d3.selectAll(".plot")
+            .transition()
+                .duration(1000)
+                .attr("r", "1")
+                .style("opacity", 0.1);
         await new Promise(r => setTimeout(r, 1000));
         return
     }
@@ -245,6 +256,10 @@ async function init() {
                 .duration(1000)
                 .style("opacity", 0.1);
         d3.selectAll(".tick").selectChildren()
+            .transition()
+                .duration(1000)
+                .style("opacity", 0.1);
+        d3.selectAll(".annotation").selectChildren()
             .transition()
                 .duration(1000)
                 .style("opacity", 0.1);
@@ -271,6 +286,8 @@ async function init() {
                 values.push(obj);
             }
         });
+        var yMinIdx = d3.minIndex(values, d => +d.value);
+        var yMaxIdx = d3.maxIndex(values, d => +d.value);
         d3.select("#title").html("State: " + d.State + "<br>Zip code: " + d.zip_code);
         d3.select("#instructions").html("Time series data for annual median property values since 1996 (or all available data).<br>Hover for details. Click 'Back' to return to Zip Code overview.")
 
@@ -304,7 +321,7 @@ async function init() {
             .x(function(d) { return x(d.date) + marginSide; })
             .y(function(d) { return y(d.value) + marginTop; })
             )
-        svg.append("g")
+        var plot = svg.append("g")
             .attr("transform", "translate("+marginSide+","+marginTop+")")
             .selectAll(".plot")
                 .data(values)
@@ -313,8 +330,19 @@ async function init() {
                     .attr("cx", function(d, i) {return x(d.date);})
                     .attr("cy", function(d) {return y(d.value);})
                     .attr("r", function(d) {return 6; })
-                    //.style("opacity", "0")
                     .attr("class", "plot")
+                    // .attr("id", function(d, i) {return i == yMinIdx ? "min-value" : null;})
+                    .attr("id", function(d, i) {
+                        if (i == yMinIdx) {
+                            console.log("Min IDX " + i);
+                            return "min-value";
+                        } else if (i == yMaxIdx) {
+                            console.log("Max Idx " + i);
+                            return "max-value";
+                        } else {
+                            return null;
+                        }
+                    })
                     .on("mouseover", timemouseover)
                     .on("mousemove", timemousemove)
                     .on("mouseleave", timemouseleave);
@@ -358,6 +386,52 @@ async function init() {
         annotationsel.append("text")
               .attr("transform", "translate(5,13)")
               .html("Hover over plot to view precise date and value.");
+
+        minmaxsel = svg.append("g")
+            .attr("class", "annotation");
+
+        minmaxsel.append("rect")
+            .attr("x", 0)
+            .attr("y", 24)
+            .attr("width", "210")
+            .attr("height", "40");
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,40)")
+            .html("Min Date: " + d3.timeFormat("%Y-%m-%d")(values[yMinIdx].date) + "; " + d3.format("($,.0f")(values[yMinIdx].value));
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,55)")
+            .html("Max Date: " + d3.timeFormat("%Y-%m-%d")(values[yMaxIdx].date) + "; " + d3.format("($,.0f")(values[yMaxIdx].value));
+
+        var minX = +Math.round(d3.select("#min-value").attr("cx"))
+        var minY = +Math.round(d3.select("#min-value").attr("cy"))
+        var maxX = +Math.round(d3.select("#max-value").attr("cx"))
+        var maxY = +Math.round(d3.select("#max-value").attr("cy"))
+
+        var minlabel = svg.append("g")
+            .attr("transform", "translate("+marginSide+","+marginTop+")")
+            .attr("class", "annotation");
+        minlabel.append("rect")
+            .attr("x", minX+5)
+            .attr("y", minY+15)
+            .attr("width", "30")
+            .attr("height", "25");
+        minlabel.append("text")
+            .attr("transform", "translate(" + (minX+10) + ", " + (minY+32) + ")")
+            .text("Min");
+
+        var maxlabel = svg.append("g")
+            .attr("transform", "translate("+marginSide+","+marginTop+")")
+            .attr("class", "annotation");
+        maxlabel.append("rect")
+            .attr("x", maxX-14)
+            .attr("y", maxY-43)
+            .attr("width", "30")
+            .attr("height", "25");
+        maxlabel.append("text")
+            .attr("transform", "translate(" + (maxX-12) + ", " + (maxY-26) + ")")
+            .text("Max");
     }
 
     async function plotZips(event, d) {
@@ -378,8 +452,12 @@ async function init() {
         var nZips = d3.map(stateData, function(d, i) { return i; });
         var width = d3.max(nZips)*15+100;
 
-        var yMax = d3.max(stateData, function(d) { return +d.mean_housing_price; });
-        var yMin = d3.min(stateData, function(d) { return +d.mean_housing_price; });
+        var yMinIdx = d3.minIndex(stateData, d => +d.mean_housing_price);
+        var yMaxIdx = d3.maxIndex(stateData, d => +d.mean_housing_price);
+        var yMax = +stateData[yMaxIdx].mean_housing_price;
+        var yMin = +stateData[yMinIdx].mean_housing_price;
+        // var yMax = d3.max(stateData, function(d) { return +d.mean_housing_price; });
+        // var yMin = d3.min(stateData, function(d) { return +d.mean_housing_price; });
 
         var x = d3.scaleLinear().domain([-1, d3.max(nZips)]).range([0, d3.max(nZips)*15]);
         var y = d3.scaleLog().domain([yMin-10000, yMax+600000]).range([height, 0]);
@@ -452,6 +530,23 @@ async function init() {
         annotationsel.append("text")
           .attr("transform", "translate(5,13)")
           .html("Node size indicates mean value. Select a node to view time series for that zip code.");
+
+        minmaxsel = svg.append("g")
+            .attr("class", "annotation");
+
+        minmaxsel.append("rect")
+            .attr("x", 0)
+            .attr("y", 24)
+            .attr("width", "210")
+            .attr("height", "40");
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,40)")
+            .html("Min Zip Code: " + stateData[yMinIdx].zip_code + "; " + d3.format("($,.0f")(stateData[yMinIdx].mean_housing_price));
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,55)")
+            .html("Max Zip Code: " + stateData[yMaxIdx].zip_code + "; " + d3.format("($,.0f")(stateData[yMaxIdx].mean_housing_price));
         }
 
 
@@ -461,7 +556,7 @@ async function init() {
 
     var plotStates = function(event, d) {
         window.scrollTo(0,0);
-        d3.select("#title").html("Overview of 50 states + D.C.");
+        d3.select("#title").html("Overview of 50 states + D.C. 25-year mean value");
         d3.select("#instructions").html("Node size for each state indicates the 25-year mean of annual median property values for each state.<br>Hover for details. Click a state to drill into Zip Code aggregations.");
         d3.selectAll("svg").remove();
         console.log("MarginSide " + marginSide + ", MarginTop " + marginTop);
@@ -479,8 +574,10 @@ async function init() {
 
         var num_zip_codes = data.map(function(d) { return +d.num_zip_codes; });
         var xDomain = num_zip_codes.sort((a, b) => a - b);
-        var yMax = d3.max(data, function(d) { return +d.mean_overall; });
-        var yMin = d3.min(data, function(d) { return +d.mean_overall; });
+        var yMinIdx = d3.minIndex(data, d => +d.mean_overall);
+        var yMaxIdx = d3.maxIndex(data, d => +d.mean_overall);
+        var yMax = +data[yMaxIdx].mean_overall;
+        var yMin = +data[yMinIdx].mean_overall;
 
         var nStates = d3.map(data, function(d, i) { return i; });
         var x = d3.scaleLinear().domain([0, d3.max(nStates)]).range([0, width]);
@@ -543,6 +640,23 @@ async function init() {
         annotationsel.append("text")
               .attr("transform", "translate(5,13)")
               .html("Node size indicates mean value. Select a node to view break down by zip code.");
+
+        minmaxsel = svg.append("g")
+            .attr("class", "annotation");
+
+        minmaxsel.append("rect")
+            .attr("x", 0)
+            .attr("y", 30)
+            .attr("width", "180")
+            .attr("height", "40");
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,46)")
+            .html("Min State: " + data[yMinIdx].State + "; " + d3.format("($,.0f")(data[yMinIdx].mean_overall));
+
+        minmaxsel.append("text")
+            .attr("transform", "translate(5,61)")
+            .html("Max State: " + data[yMaxIdx].State + "; " + d3.format("($,.0f")(data[yMaxIdx].mean_overall));
 
         //svg.call(zoomNodes);
 
